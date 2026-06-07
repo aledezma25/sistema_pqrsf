@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema PQRSF - Formulario de Registro</title>
+    <meta name="description"
+        content="Formulario inteligente de Peticiones, Quejas, Reclamos, Sugerencias y Felicitaciones (PQRSF) integrado con automatización n8n.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --primary-light: rgba(79, 70, 229, 0.1);
+            --bg-gradient: radial-gradient(circle at 0% 0%, #f5f3ff 0%, #f3f4f6 100%);
+            --card-bg: rgba(255, 255, 255, 0.85);
+            --card-border: rgba(255, 255, 255, 0.6);
+            --text-main: #1f2937;
+            --text-muted: #4b5563;
+            --input-bg: #ffffff;
+            --input-border: #d1d5db;
+            --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+            --success: #10b981;
+            --error: #ef4444;
+            --border-radius: 16px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        [data-theme="dark"] {
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --primary-light: rgba(99, 102, 241, 0.15);
+            --bg-gradient: radial-gradient(circle at 0% 0%, #0f172a 0%, #020617 100%);
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --input-bg: #0f172a;
+            --input-border: #334155;
+            --shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1rem;
+            transition: var(--transition);
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Ambient background blobs for modern look */
+        .ambient-blob {
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, rgba(79, 70, 229, 0.15) 0%, rgba(168, 85, 247, 0.15) 100%);
+            filter: blur(80px);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .blob-1 {
+            top: -100px;
+            left: -100px;
+        }
+
+        .blob-2 {
+            bottom: -100px;
+            right: -100px;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(6, 182, 212, 0.15) 100%);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 580px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Card styles with glassmorphism */
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--card-border);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 2.5rem;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Top control buttons */
+        .controls {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .icon-btn {
+            background: transparent;
+            border: 1px solid var(--input-border);
+            color: var(--text-muted);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+            outline: none;
+        }
+
+        .icon-btn:hover {
+            color: var(--primary);
+            background: var(--primary-light);
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .header {
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.025em;
+        }
+
+        .header p {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        /* Settings Panel */
+        .settings-panel {
+            background: var(--primary-light);
+            border: 1px dashed var(--primary);
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-bottom: 2rem;
+            display: none;
+            animation: slideDown 0.3s ease-out forwards;
+        }
+
+        .settings-panel.open {
+            display: block;
+        }
+
+        .settings-panel h3 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .settings-panel p {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 0.75rem;
+        }
+
+        /* Form Controls */
+        .form-group {
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 0.5rem;
+            transition: var(--transition);
+        }
+
+        .form-group:focus-within .form-label {
+            color: var(--primary);
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            pointer-events: none;
+            transition: var(--transition);
+        }
+
+        .form-group:focus-within .input-icon {
+            color: var(--primary);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.875rem 1rem 0.875rem 2.75rem;
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            border-radius: 10px;
+            color: var(--text-main);
+            font-size: 0.95rem;
+            transition: var(--transition);
+            outline: none;
+        }
+
+        textarea.form-input {
+            padding-top: 0.875rem;
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .textarea-wrapper .input-icon {
+            top: 1.25rem;
+            transform: none;
+        }
+
+        .textarea-wrapper .form-input {
+            padding-left: 2.75rem;
+        }
+
+        .form-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px var(--primary-light);
+        }
+
+        .form-input::placeholder {
+            color: var(--text-muted);
+            opacity: 0.5;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 1rem 2rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 14px rgba(79, 70, 229, 0.3);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(79, 70, 229, 0.4);
+        }
+
+        .btn-primary:active {
+            transform: translateY(1px);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+            display: none;
+        }
+
+        .loading .spinner {
+            display: block;
+        }
+
+        .loading .btn-text {
+            display: none;
+        }
+
+        /* Response States */
+        .response-container {
+            display: none;
+            text-align: center;
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+
+        .response-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+        }
+
+        .success-icon {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .error-icon {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error);
+        }
+
+        .response-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+        }
+
+        .response-message {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+            margin-bottom: 2rem;
+        }
+
+        /* Metadata Ticket styling for returned result */
+        .receipt-card {
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            border-radius: 12px;
+            padding: 1.25rem;
+            text-align: left;
+            margin-bottom: 2rem;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
+            animation: scaleUp 0.3s ease-out;
+        }
+
+        .receipt-header {
+            border-bottom: 1px dashed var(--input-border);
+            padding-bottom: 0.75rem;
+            margin-bottom: 0.75rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .receipt-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            font-weight: 700;
+        }
+
+        .receipt-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.6rem;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .badge-alta {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error);
+        }
+
+        .badge-media {
+            background: rgba(245, 158, 11, 0.1);
+            color: #d97706;
+        }
+
+        .badge-baja {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .receipt-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .receipt-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .receipt-label {
+            color: var(--text-muted);
+        }
+
+        .receipt-value {
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .receipt-value.radicado {
+            color: var(--primary);
+            font-family: monospace;
+            font-size: 0.95rem;
+        }
+
+        /* Animations */
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes scaleUp {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            body {
+                padding: 1rem;
+            }
+
+            .card {
+                padding: 2rem 1.5rem;
+            }
+
+            .header h1 {
+                font-size: 1.75rem;
+            }
+
+            .controls {
+                top: 1rem;
+                right: 1rem;
+            }
+        }
+    </style>
+</head>
+
+<body data-theme="light">
+
+    <div class="ambient-blob blob-1"></div>
+    <div class="ambient-blob blob-2"></div>
+
+    <div class="container">
+        <!-- Main Form Card -->
+        <div class="card" id="form-card">
+
+            <!-- Controls (Theme & Settings) -->
+            <div class="controls">
+                <button type="button" class="icon-btn" id="theme-toggle" title="Cambiar Tema" aria-label="Cambiar Tema">
+                    <!-- Sun Icon (default) -->
+                    <svg id="sun-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="4"></circle>
+                        <path d="M12 2v2"></path>
+                        <path d="M12 20v2"></path>
+                        <path d="m4.93 4.93 1.41 1.41"></path>
+                        <path d="m17.66 17.66 1.41 1.41"></path>
+                        <path d="M2 12h2"></path>
+                        <path d="M20 12h2"></path>
+                        <path d="m6.34 17.66-1.41 1.41"></path>
+                        <path d="m19.07 4.93-1.41 1.41"></path>
+                    </svg>
+                    <!-- Moon Icon (hidden by default) -->
+                    <svg id="moon-icon" style="display: none;" xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
+                    </svg>
+                </button>
+                <button type="button" class="icon-btn" id="settings-toggle" title="Configurar Webhook"
+                    aria-label="Configurar Webhook">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path
+                            d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.1a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z">
+                        </path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Header -->
+            <div class="header">
+                <h1 id="form-title">Sistema PQRSF</h1>
+                <p id="form-description">Por favor complete el siguiente formulario para registrar su Petición, Queja,
+                    Reclamo o Sugerencia.</p>
+            </div>
+
+            <!-- Settings Panel -->
+            <div class="settings-panel" id="settings-panel">
+                <h3>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                    </svg>
+                    Configuración del Webhook
+                </h3>
+                <p>Configure el modo según el estado del flujo en N8n.</p>
+
+                <!-- Mode Toggle -->
+                <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+                    <button type="button" id="mode-prod" onclick="setMode('production')"
+                        style="flex:1; padding: 0.5rem; border-radius: 8px; border: 1px solid var(--primary); background: var(--primary); color: white; font-size: 0.8rem; font-weight: 600; cursor: pointer;">
+                        🟢 Producción
+                    </button>
+                    <button type="button" id="mode-test" onclick="setMode('test')"
+                        style="flex:1; padding: 0.5rem; border-radius: 8px; border: 1px solid var(--input-border); background: transparent; color: var(--text-muted); font-size: 0.8rem; font-weight: 600; cursor: pointer;">
+                        🧪 Prueba
+                    </button>
+                </div>
+                <p id="mode-hint" style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+                    Flujo activo con toggle en N8n. URL: <code style="font-size:0.75rem;">/webhook/</code>
+                </p>
+
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label" for="webhook-url">Webhook URL (editable)</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <rect width="20" height="8" x="2" y="2" rx="2" ry="2"></rect>
+                                <rect width="20" height="8" x="2" y="14" rx="2" ry="2"></rect>
+                                <line x1="6" x2="6.01" y1="6" y2="6"></line>
+                                <line x1="6" x2="6.01" y1="18" y2="18"></line>
+                            </svg>
+                        </span>
+                        <input type="url" class="form-input" id="webhook-url" style="padding-left: 2.75rem;"
+                            placeholder="https://su-n8n.com/webhook/..." required>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Entity -->
+            <form id="pqrsf-form" novalidate>
+
+                <!-- Nombre Field -->
+                <div class="form-group">
+                    <label class="form-label" for="nombre">Nombre</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                        </span>
+                        <input type="text" class="form-input" id="nombre" name="nombre"
+                            placeholder="Ingrese su nombre completo" required>
+                    </div>
+                </div>
+
+                <!-- Correo electrónico Field -->
+                <div class="form-group">
+                    <label class="form-label" for="correo">Correo electrónico</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <rect width="20" height="16" x="2" y="4" rx="2"></rect>
+                                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+                            </svg>
+                        </span>
+                        <input type="email" class="form-input" id="correo" name="correo"
+                            placeholder="ejemplo@correo.com" required>
+                    </div>
+                </div>
+
+                <!-- Asunto Field -->
+                <div class="form-group">
+                    <label class="form-label" for="asunto">Asunto</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                            </svg>
+                        </span>
+                        <input type="text" class="form-input" id="asunto" name="asunto"
+                            placeholder="Motivo de su comunicación" required>
+                    </div>
+                </div>
+
+                <!-- Descripción de la solicitud Field -->
+                <div class="form-group textarea-wrapper">
+                    <label class="form-label" for="descripcion">Descripción de la solicitud</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <path d="M14 2v6h6"></path>
+                                <path d="M16 13H8"></path>
+                                <path d="M16 17H8"></path>
+                                <path d="M10 9H8"></path>
+                            </svg>
+                        </span>
+                        <textarea class="form-input" id="descripcion" name="descripcion"
+                            placeholder="Detalle su petición, queja, reclamo o sugerencia con la mayor claridad posible..."
+                            required></textarea>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="btn btn-primary" id="submit-btn">
+                    <span class="spinner"></span>
+                    <span class="btn-text">Enviar Solicitud</span>
+                </button>
+            </form>
+
+            <!-- Success State -->
+            <div class="response-container" id="success-state">
+                <div class="response-icon success-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 6 9 17l-5-5"></path>
+                    </svg>
+                </div>
+                <h2 class="response-title">¡Envío Exitoso!</h2>
+                <p class="response-message" id="success-msg">Su solicitud ha sido recibida. Recibirá un correo de
+                    confirmación con el número de radicado.</p>
+
+                <!-- Ticket receipt details from n8n response -->
+                <div class="receipt-card" id="receipt-details" style="display: none;">
+                    <div class="receipt-header">
+                        <span class="receipt-title">Radicado de Solicitud</span>
+                        <span class="receipt-badge" id="receipt-priority">Media</span>
+                    </div>
+                    <div class="receipt-row">
+                        <span class="receipt-label">Radicado ID:</span>
+                        <span class="receipt-value radicado" id="receipt-radicado">-</span>
+                    </div>
+                    <div class="receipt-row">
+                        <span class="receipt-label">Fecha:</span>
+                        <span class="receipt-value" id="receipt-date">-</span>
+                    </div>
+                    <div class="receipt-row">
+                        <span class="receipt-label">Categoría:</span>
+                        <span class="receipt-value" id="receipt-category">-</span>
+                    </div>
+                    <div class="receipt-row">
+                        <span class="receipt-label">Área Asignada:</span>
+                        <span class="receipt-value" id="receipt-area">-</span>
+                    </div>
+                    <div class="receipt-row" id="receipt-resumen-row" style="display:none;">
+                        <span class="receipt-label">Resumen IA:</span>
+                        <span class="receipt-value" id="receipt-resumen" style="font-style: italic; color: var(--text-muted); font-size: 0.875rem;">-</span>
+                    </div>
+                </div>
+
+                <button type="button" class="btn btn-primary" id="new-btn">Registrar Otra Solicitud</button>
+            </div>
+
+            <!-- Error State -->
+            <div class="response-container" id="error-state">
+                <div class="response-icon error-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" x2="6" y1="6" y2="18"></line>
+                        <line x1="6" x2="18" y1="6" y2="18"></line>
+                    </svg>
+                </div>
+                <h2 class="response-title">Error al Enviar</h2>
+                <p class="response-message" id="error-msg">No pudimos conectar con el servidor. Por favor verifica tu
+                    conexión o la URL del webhook en la configuración.</p>
+                <button type="button" class="btn btn-primary" id="retry-btn">Reintentar</button>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // Webhook configuration
+        const DEFAULT_WEBHOOK_ID = "53096220-b5a1-416e-8960-7a6aac63e4fc";
+        const WEBHOOK_PROD = `https://acchami25.app.n8n.cloud/webhook/${DEFAULT_WEBHOOK_ID}`;
+        const WEBHOOK_TEST = `https://acchami25.app.n8n.cloud/webhook-test/${DEFAULT_WEBHOOK_ID}`;
+        const DEFAULT_WEBHOOK_URL = WEBHOOK_PROD;
+
+        // Mode management
+        let currentMode = localStorage.getItem('pqrsf_mode') || 'production';
+
+        function setMode(mode) {
+            currentMode = mode;
+            localStorage.setItem('pqrsf_mode', mode);
+            const url = mode === 'production' ? WEBHOOK_PROD : WEBHOOK_TEST;
+            webhookUrl = url;
+            webhookUrlInput.value = url;
+            localStorage.setItem('pqrsf_webhook_url', url);
+
+            const prodBtn = document.getElementById('mode-prod');
+            const testBtn = document.getElementById('mode-test');
+            const hint = document.getElementById('mode-hint');
+
+            if (mode === 'production') {
+                prodBtn.style.background = 'var(--primary)';
+                prodBtn.style.color = 'white';
+                prodBtn.style.borderColor = 'var(--primary)';
+                testBtn.style.background = 'transparent';
+                testBtn.style.color = 'var(--text-muted)';
+                testBtn.style.borderColor = 'var(--input-border)';
+                hint.innerHTML = 'Flujo activo con toggle en N8n. URL: <code style="font-size:0.75rem;">/webhook/</code>';
+            } else {
+                testBtn.style.background = 'var(--primary)';
+                testBtn.style.color = 'white';
+                testBtn.style.borderColor = 'var(--primary)';
+                prodBtn.style.background = 'transparent';
+                prodBtn.style.color = 'var(--text-muted)';
+                prodBtn.style.borderColor = 'var(--input-border)';
+                hint.innerHTML = 'Flujo en modo prueba (botón "Test workflow" activo en N8n). URL: <code style="font-size:0.75rem;">/webhook-test/</code>';
+            }
+        }
+
+        // DOM elements
+        const formCard = document.getElementById('form-card');
+        const pqrsfForm = document.getElementById('pqrsf-form');
+        const submitBtn = document.getElementById('submit-btn');
+        const settingsToggle = document.getElementById('settings-toggle');
+        const settingsPanel = document.getElementById('settings-panel');
+        const webhookUrlInput = document.getElementById('webhook-url');
+        const themeToggle = document.getElementById('theme-toggle');
+        const sunIcon = document.getElementById('sun-icon');
+        const moonIcon = document.getElementById('moon-icon');
+
+        // States
+        const successState = document.getElementById('success-state');
+        const errorState = document.getElementById('error-state');
+        const successMsg = document.getElementById('success-msg');
+        const errorMsg = document.getElementById('error-msg');
+        const newBtn = document.getElementById('new-btn');
+        const retryBtn = document.getElementById('retry-btn');
+
+        // Receipt details elements
+        const receiptDetails = document.getElementById('receipt-details');
+        const receiptRadicado = document.getElementById('receipt-radicado');
+        const receiptPriority = document.getElementById('receipt-priority');
+        const receiptDate = document.getElementById('receipt-date');
+        const receiptCategory = document.getElementById('receipt-category');
+        const receiptArea = document.getElementById('receipt-area');
+        const receiptResumen = document.getElementById('receipt-resumen');
+        const receiptResumenRow = document.getElementById('receipt-resumen-row');
+
+        // Initialize Settings from LocalStorage
+        let webhookUrl = localStorage.getItem('pqrsf_webhook_url') || DEFAULT_WEBHOOK_URL;
+        webhookUrlInput.value = webhookUrl;
+
+        // Initialize mode buttons on load
+        window.addEventListener('DOMContentLoaded', () => setMode(currentMode));
+
+        // Initialize Theme from LocalStorage or System Preferences
+        const savedTheme = localStorage.getItem('pqrsf_theme');
+        if (savedTheme) {
+            document.body.setAttribute('data-theme', savedTheme);
+            updateThemeIcons(savedTheme);
+        } else {
+            const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const initialTheme = systemPrefersDark ? 'dark' : 'light';
+            document.body.setAttribute('data-theme', initialTheme);
+            updateThemeIcons(initialTheme);
+        }
+
+        // Event Listeners
+        settingsToggle.addEventListener('click', () => {
+            settingsPanel.classList.toggle('open');
+        });
+
+        webhookUrlInput.addEventListener('change', () => {
+            let val = webhookUrlInput.value.trim();
+            if (!val) {
+                val = DEFAULT_WEBHOOK_URL;
+                webhookUrlInput.value = val;
+            }
+            webhookUrl = val;
+            localStorage.setItem('pqrsf_webhook_url', val);
+        });
+
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = document.body.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.body.setAttribute('data-theme', newTheme);
+            localStorage.setItem('pqrsf_theme', newTheme);
+            updateThemeIcons(newTheme);
+        });
+
+        function updateThemeIcons(theme) {
+            if (theme === 'dark') {
+                sunIcon.style.display = 'none';
+                moonIcon.style.display = 'block';
+            } else {
+                sunIcon.style.display = 'block';
+                moonIcon.style.display = 'none';
+            }
+        }
+
+        // Form submission handling
+        pqrsfForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // Validate form
+            if (!pqrsfForm.checkValidity()) {
+                // Trigger HTML5 validations
+                pqrsfForm.reportValidity();
+                return;
+            }
+
+            // Enter loading state
+            submitBtn.disabled = true;
+            submitBtn.classList.add('loading');
+
+            // Gather form data
+            const formData = {
+                nombre: document.getElementById('nombre').value.trim(),
+                correo: document.getElementById('correo').value.trim(),
+                asunto: document.getElementById('asunto').value.trim(),
+                descripcion: document.getElementById('descripcion').value.trim()
+            };
+
+            try {
+                // Post to webhook
+                const response = await fetch(webhookUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'text/plain'
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP Error: ${response.status} ${response.statusText}`);
+                }
+
+                // Parse the response
+                let result = null;
+                try {
+                    // It could be JSON returning from lastNode (our n8n flow is configured that way)
+                    result = await response.json();
+                } catch (jsonErr) {
+                    console.log('La respuesta no es JSON o está vacía:', jsonErr);
+                }
+
+                // Transition to success state
+                pqrsfForm.style.display = 'none';
+                settingsToggle.style.display = 'none';
+                successState.style.display = 'block';
+
+                // Handle rich response from n8n lastNode if available
+                if (result && (result.radicado || (Array.isArray(result) && result[0] && result[0].radicado))) {
+                    const data = Array.isArray(result) ? result[0] : result;
+
+                    // Fill receipt fields
+                    receiptRadicado.textContent = data.radicado || '-';
+                    receiptDate.textContent = data.fecha || new Date().toISOString().split('T')[0];
+                    receiptCategory.textContent = data.categoria || 'No clasificada';
+                    receiptArea.textContent = data.area || 'General';
+
+                    // Priority badge with color
+                    const priority = (data.prioridad || 'Media').toLowerCase();
+                    receiptPriority.textContent = data.prioridad || 'Media';
+                    receiptPriority.className = `receipt-badge badge-${priority}`;
+
+                    // Show resumen if available
+                    if (data.resumen) {
+                        receiptResumen.textContent = data.resumen;
+                        receiptResumenRow.style.display = 'flex';
+                    }
+
+                    // Dynamic success message based on priority
+                    if (priority === 'alta') {
+                        successMsg.innerHTML = `Su solicitud ha sido clasificada como <strong>prioridad alta</strong> y fue escalada al área <strong>${data.area}</strong>. Recibirá respuesta en menos de 24 horas.`;
+                    } else if (priority === 'media') {
+                        successMsg.textContent = `Su solicitud fue recibida y asignada al área ${data.area}. Recibirá respuesta en 3-5 días hábiles.`;
+                    } else {
+                        successMsg.textContent = `Su solicitud fue recibida correctamente. Recibirá un correo de confirmación con su número de radicado.`;
+                    }
+
+                    receiptDetails.style.display = 'block';
+                } else {
+                    // Hide receipt if response wasn't full JSON
+                    receiptDetails.style.display = 'none';
+                }
+
+            } catch (error) {
+                console.error('Submission failed:', error);
+
+                // Transition to error state
+                pqrsfForm.style.display = 'none';
+                settingsToggle.style.display = 'none';
+                errorMsg.innerHTML = `No se pudo enviar la solicitud.<br><small style="opacity:0.8; font-family: monospace;">Detalle: ${error.message}</small><br><br>Por favor verifica tu conexión de red o la URL del webhook en la parte superior.`;
+                errorState.style.display = 'block';
+            } finally {
+                // Exit loading state
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('loading');
+            }
+        });
+
+        // Reset flow
+        function resetForm() {
+            pqrsfForm.reset();
+            successState.style.display = 'none';
+            errorState.style.display = 'none';
+            pqrsfForm.style.display = 'block';
+            settingsToggle.style.display = 'flex';
+            receiptDetails.style.display = 'none';
+        }
+
+        newBtn.addEventListener('click', resetForm);
+
+        retryBtn.addEventListener('click', () => {
+            errorState.style.display = 'none';
+            pqrsfForm.style.display = 'block';
+            settingsToggle.style.display = 'flex';
+        });
+    </script>
+</body>
+
+</html>
