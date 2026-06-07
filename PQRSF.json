@@ -1,0 +1,545 @@
+{
+  "name": "PQRSF",
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "const now = new Date();\nconst year = now.getFullYear();\nconst month = String(now.getMonth() + 1).padStart(2, \"0\");\nconst day = String(now.getDate()).padStart(2, \"0\");\nconst timestamp = now.getTime();\nconst random = Math.floor(Math.random() * 1000).toString().padStart(3, \"0\");\nconst radicado = `PQRS-${year}${month}${day}-${timestamp}-${random}`;\nconst fecha = now.toISOString().split(\"T\")[0];\n\nreturn [{ ...items[0].json, radicado, fecha }];"
+      },
+      "id": "a7b67d29-f55a-4749-9cec-aa1e16f8cd28",
+      "name": "Generar Radicado",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        464,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analiza la siguiente solicitud PQRS y clasifícala:\n\nNombre: {{ $json.body.nombre }}\nAsunto: {{ $json.body.asunto }}\nDescripción: {{ $json.body.descripcion }}\nRadicado: {{ $json.radicado }}\nCorreo: {{ $json.body.correo }}\n\n\"IMPORTANT: You MUST call the Gmail Tool FIRST before returning any structured output. Do not return JSON until the email has been sent.\"\n\nInstrucciones:\n1. Clasifica como: Petición, Queja, Reclamo o Sugerencia\n2. Asigna prioridad: Alta, Media o Baja\n3. Identifica área responsable: Servicio al Cliente, Servicios Financieros, Operaciones, Jurídica o Innovación\n4. Genera un resumen breve (máximo 100 palabras)\n5. Detecta palabras clave críticas: fraude, estafa, robo, demanda, lavado de activos\n\nSi detectas alguna palabra crítica, asigna prioridad Alta y área Jurídica.\n\nPASO OBLIGATORIO - USA LA HERRAMIENTA DE (Gmail Tool):\n\nDEBES enviar un correo de confirmación al usuario usando la herramienta de Gmail. El correo debe tener:\n- Destinatario: el correo del usuario\n- Asunto: Confirmación de recepción PQRS - [número de radicado]\n- Mensaje HTML que incluya: saludo con el nombre, número de radicado, categoría, prioridad, área responsable, agradecimiento y tiempo estimado de respuesta (3-5 días hábiles)\n\n\nDespués de enviar el correo, devuelve el análisis estructurado.",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "Eres un asistente especializado en la gestión de PQRS (Peticiones, Quejas, Reclamos y Sugerencias).\n\nTienes acceso a la herramienta de Gmail y DEBES usarla para enviar el correo de confirmación al usuario.\n\nÁreas responsables y sus competencias:\n- Servicio al Cliente: Atención general, consultas, información\n- Servicios Financieros: Productos financieros, cuentas, transacciones\n- Operaciones: Procesos internos, logística, infraestructura\n- Jurídica: Asuntos legales, fraude, demandas, cumplimiento\n- Innovación: Sugerencias de mejora, nuevos productos, tecnología\n\nCriterios de prioridad:\n- Alta: Asuntos urgentes, legales, fraude, pérdidas económicas, riesgos\n- Media: Solicitudes importantes pero no urgentes\n- Baja: Consultas generales, información\n\nPalabras clave críticas que requieren prioridad Alta y área Jurídica:\nfraude, estafa, robo, demanda, lavado de activos, corrupción, malversación\n\nFLUJO DE TRABAJO OBLIGATORIO:\n1. Analiza la solicitud y clasifícala\n2. USA la herramienta de Gmail para enviar el correo de confirmación\n3. Devuelve el resultado estructurado\n\nNO omitas el paso 2. El correo DEBE ser enviado usando la herramienta."
+        }
+      },
+      "id": "73e85d93-69ea-42f9-abfc-208aa0261642",
+      "name": "Clasificador PQRS",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        752,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $(\"Clasificador PQRS\").item.json.output.prioridad }}",
+              "rightValue": "Alta",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              },
+              "id": "d560695d-195a-4ee7-8f2b-e41c0382c911"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "2b017c89-e87a-41d6-88d5-e2edb42a8d8e",
+      "name": "Verificar Prioridad Alta",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1376,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "acalebe21@gmail.com",
+        "subject": "=URGENTE: PQRS Prioridad Alta - {{ $(\"Generar Radicado\").item.json.radicado }}",
+        "message": "=<!DOCTYPE html>\n<html lang=\"es\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Alerta de PQRS Prioridad Alta</title>\n    <style>\n        body {\n            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;\n            line-height: 1.6;\n            color: #333;\n            margin: 0;\n            padding: 0;\n            background-color: #f4f7f9;\n        }\n        .container {\n            max-width: 600px;\n            margin: 20px auto;\n            background: #ffffff;\n            border-radius: 8px;\n            overflow: hidden;\n            box-shadow: 0 4px 10px rgba(0,0,0,0.1);\n            border-top: 6px solid #d32f2f;\n        }\n        .header {\n            background-color: #d32f2f;\n            color: #ffffff;\n            padding: 20px;\n            text-align: center;\n        }\n        .header h2 {\n            margin: 0;\n            font-size: 24px;\n            text-transform: uppercase;\n            letter-spacing: 1px;\n        }\n        .content {\n            padding: 30px;\n        }\n        .badge {\n            display: inline-block;\n            padding: 4px 12px;\n            border-radius: 20px;\n            font-size: 12px;\n            font-weight: bold;\n            text-transform: uppercase;\n            margin-bottom: 10px;\n        }\n        .badge-priority {\n            background-color: #ffebee;\n            color: #c62828;\n            border: 1px solid #ef9a9a;\n        }\n        .info-grid {\n            width: 100%;\n            border-collapse: collapse;\n            margin-bottom: 20px;\n        }\n        .info-grid td {\n            padding: 10px 0;\n            border-bottom: 1px solid #eee;\n            vertical-align: top;\n        }\n        .info-grid td.label {\n            font-weight: bold;\n            color: #555;\n            width: 140px;\n        }\n        .section-title {\n            font-size: 18px;\n            color: #d32f2f;\n            margin-top: 25px;\n            margin-bottom: 10px;\n            border-bottom: 2px solid #f4f7f9;\n            padding-bottom: 5px;\n        }\n        .description-box {\n            background-color: #fafafa;\n            border-left: 4px solid #d32f2f;\n            padding: 15px;\n            font-style: italic;\n            color: #444;\n            margin-top: 10px;\n        }\n        .footer {\n            background-color: #f9f9f9;\n            padding: 15px;\n            text-align: center;\n            font-size: 12px;\n            color: #888;\n            border-top: 1px solid #eee;\n        }\n        .keywords {\n            background-color: #e3f2fd;\n            color: #1565c0;\n            padding: 2px 8px;\n            border-radius: 4px;\n            font-size: 11px;\n            margin-right: 5px;\n            display: inline-block;\n        }\n    </style>\n</head>\n<body>\n    <div class=\"container\">\n        <div class=\"header\">\n            <h2>Alerta de PQRS</h2>\n            <div style=\"font-size: 14px; margin-top: 5px; opacity: 0.9;\">Atención Inmediata Requerida</div>\n        </div>\n        \n        <div class=\"content\">\n            <div class=\"badge badge-priority\">Prioridad: {{ $json.prioridad }}</div>\n            \n            <table class=\"info-grid\">\n                <tr>\n                    <td class=\"label\">Radicado:</td>\n                    <td><strong>{{ $(\"Generar Radicado\").item.json.radicado }}</strong></td>\n                </tr>\n                <tr>\n                    <td class=\"label\">Fecha:</td>\n                    <td>{{ $(\"Generar Radicado\").item.json.fecha }}</td>\n                </tr>\n                <tr>\n                    <td class=\"label\">Categoría:</td>\n                    <td>{{ $json.categoria }}</td>\n                </tr>\n                <tr>\n                    <td class=\"label\">Área:</td>\n                    <td>{{ $json.area }}</td>\n                </tr>\n                <tr>\n                    <td class=\"label\">Solicitante:</td>\n                    <td>{{ $(\"Generar Radicado\").item.json.nombre }}<br>\n                        <small style=\"color: #666;\">{{ $(\"Generar Radicado\").item.json.correo }}</small>\n                    </td>\n                </tr>\n                <tr>\n                    <td class=\"label\">Asunto:</td>\n                    <td>{{ $(\"Generar Radicado\").item.json.asunto }}</td>\n                </tr>\n            </table>\n\n            <div class=\"section-title\">Resumen del Caso</div>\n            <p style=\"margin-top: 0;\">{{ $json.resumen }}</p>\n\n            <div style=\"margin-top: 15px;\">\n                <span style=\"font-weight: bold; color: #555; font-size: 13px;\">Palabras clave:</span><br>\n                <div style=\"margin-top: 5px;\">\n                    {{ $('Clasificador PQRS').item.json.output.palabrasClave }}\n                </div>\n            </div>\n\n            <div class=\"section-title\">Descripción Completa</div>\n            <div class=\"description-box\">\n                {{ $(\"Generar Radicado\").item.json.descripcion }}\n            </div>\n        </div>\n\n        <div class=\"footer\">\n            Este es un mensaje automático generado por el Sistema de Gestión de PQRS.<br>\n            Por favor, no responda a este correo.\n        </div>\n    </div>\n</body>\n</html>\n",
+        "options": {}
+      },
+      "id": "65abf9ea-66c2-414b-bfcb-5a8da95eab50",
+      "name": "Notificar Área Jurídica",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1600,
+        160
+      ],
+      "webhookId": "0de0af7d-4f46-449c-9d33-2aa203fd9335",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "hZkiCB49oOCJz7SB",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1",
+              "name": "radicado",
+              "value": "={{ $(\"Generar Radicado\").item.json.radicado }}",
+              "type": "string"
+            },
+            {
+              "id": "2",
+              "name": "categoria",
+              "value": "={{ $(\"Clasificador PQRS\").item.json.output.categoria }}",
+              "type": "string"
+            },
+            {
+              "id": "3",
+              "name": "prioridad",
+              "value": "={{ $(\"Clasificador PQRS\").item.json.output.prioridad }}",
+              "type": "string"
+            },
+            {
+              "id": "4",
+              "name": "area",
+              "value": "={{ $(\"Clasificador PQRS\").item.json.output.area }}",
+              "type": "string"
+            },
+            {
+              "id": "5",
+              "name": "resumen",
+              "value": "={{ $(\"Clasificador PQRS\").item.json.output.resumen }}",
+              "type": "string"
+            },
+            {
+              "id": "6",
+              "name": "fecha",
+              "value": "={{ $(\"Generar Radicado\").item.json.fecha }}",
+              "type": "string"
+            },
+            {
+              "id": "7",
+              "name": "nombre",
+              "value": "={{ $('Generar Radicado').item.json.body.nombre }}",
+              "type": "string"
+            },
+            {
+              "id": "8",
+              "name": "correo",
+              "value": "={{ $('Generar Radicado').item.json.body.correo }}",
+              "type": "string"
+            },
+            {
+              "id": "9",
+              "name": "asunto",
+              "value": "={{ $('Generar Radicado').item.json.body.asunto }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "952d5a66-a00a-40fb-b2a5-de56c1791d02",
+      "name": "Preparar Resultado Final",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1824,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "id": "3bef891d-b754-43b0-8249-2122a964a037",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        688,
+        512
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "7xU4Wslf83X180uH",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('To', ``, 'string') }}",
+        "subject": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('asunto', 'Asunto del correo') }}",
+        "message": "=<!DOCTYPE html>\n<html lang=\"es\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Confirmación de Recepción PQRS</title>\n    <style>\n        body {\n            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;\n            line-height: 1.6;\n            color: #444;\n            margin: 0;\n            padding: 0;\n            background-color: #f8f9fa;\n        }\n        .wrapper {\n            width: 100%;\n            table-layout: fixed;\n            background-color: #f8f9fa;\n            padding-bottom: 40px;\n        }\n        .main-container {\n            max-width: 600px;\n            margin: 0 auto;\n            background-color: #ffffff;\n            border-radius: 12px;\n            overflow: hidden;\n            box-shadow: 0 10px 30px rgba(0,0,0,0.05);\n            margin-top: 40px;\n        }\n        .header {\n            background: linear-gradient(135deg, #1a73e8 0%, #0d47a1 100%);\n            color: #ffffff;\n            padding: 40px 20px;\n            text-align: center;\n        }\n        .header h1 {\n            margin: 0;\n            font-size: 22px;\n            font-weight: 600;\n            letter-spacing: 0.5px;\n        }\n        .content {\n            padding: 40px 30px;\n        }\n        .greeting {\n            font-size: 18px;\n            font-weight: bold;\n            color: #1a73e8;\n            margin-bottom: 20px;\n        }\n        .message-body {\n            font-size: 15px;\n            color: #555;\n            margin-bottom: 30px;\n        }\n        .details-card {\n            background-color: #f1f3f4;\n            border-radius: 8px;\n            padding: 20px;\n            margin-bottom: 30px;\n        }\n        .detail-row {\n            padding: 10px 0;\n            border-bottom: 1px solid #e0e0e0;\n        }\n        .detail-row:last-child {\n            border-bottom: none;\n        }\n        .detail-label {\n            font-weight: 600;\n            color: #666;\n            font-size: 12px;\n            text-transform: uppercase;\n            display: block;\n            margin-bottom: 4px;\n        }\n        .detail-value {\n            font-weight: 500;\n            color: #333;\n            font-size: 14px;\n            word-break: break-word;\n        }\n        .eta-box {\n            background-color: #e8f0fe;\n            border-left: 4px solid #1a73e8;\n            padding: 15px;\n            margin-top: 20px;\n            border-radius: 0 4px 4px 0;\n        }\n        .eta-text {\n            color: #1967d2;\n            font-weight: 600;\n            margin: 0;\n        }\n        .footer {\n            text-align: center;\n            padding: 20px;\n            font-size: 12px;\n            color: #999;\n        }\n    </style>\n</head>\n<body>\n    <div class=\"wrapper\">\n        <div class=\"main-container\">\n            <div class=\"header\">\n                <h1>Confirmación de Recepción PQRS</h1>\n            </div>\n            \n            <div class=\"content\">\n                <div class=\"greeting\">Hola, {{ $json.body.nombre }}</div>\n                \n                <div class=\"message-body\">\n                    Hemos recibido correctamente tu solicitud. Un equipo especializado ha sido asignado para revisar tu caso y brindarte una solución adecuada.\n                </div>\n\n                <div class=\"details-card\">\n                    <div class=\"detail-row\">\n                        <span class=\"detail-label\">Número de Radicado</span>\n                        <span class=\"detail-value\" style=\"color: #1a73e8; font-weight: bold;\">{{ $json.radicado }}</span>\n                    </div>\n                    <div class=\"detail-row\">\n                        <span class=\"detail-label\">Asunto</span>\n                        <span class=\"detail-value\">{{ $json.body.asunto }}</span>\n                    </div>\n                    <div class=\"detail-row\">\n                        <span class=\"detail-label\">Descripción</span>\n                        <span class=\"detail-value\">{{ $json.body.descripcion }}</span>\n                    </div>\n                    <div class=\"detail-row\">\n                        <span class=\"detail-label\">Fecha de Recepción</span>\n                        <span class=\"detail-value\">{{ $json.fecha }}</span>\n                    </div>\n                </div>\n\n                <div class=\"eta-box\">\n                    <p class=\"eta-text\">\n                        <strong>Tiempo estimado de respuesta:</strong><br>\n                        Tu solicitud será atendida en un plazo de 3 a 5 días hábiles.\n                    </p>\n                </div>\n\n                <div style=\"margin-top: 40px; border-top: 1px solid #eee; padding-top: 20px; font-size: 14px; color: #777;\">\n                    Gracias por confiar en nosotros.<br>\n                    <strong>Atentamente,<br>Equipo de Atención al Ciudadano</strong>\n                </div>\n            </div>\n\n            <div class=\"footer\">\n                Este es un mensaje automático generado por nuestro sistema.<br>\n                &copy; 2024 Sistema de Gestión de PQRS\n            </div>\n        </div>\n    </div>\n</body>\n</html>\n",
+        "options": {}
+      },
+      "id": "8f4bf116-9cc7-43d8-b13b-c6abb11a2245",
+      "name": "Gmail Tool",
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.2,
+      "position": [
+        816,
+        512
+      ],
+      "webhookId": "4a7ddc6a-6dfc-4140-9cb0-8bbc588de50d",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "hZkiCB49oOCJz7SB",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\"categoria\":\"Petición\",\"prioridad\":\"Media\",\"area\":\"Servicio al Cliente\",\"resumen\":\"Breve resumen de la solicitud\",\"palabrasClave\":[]}"
+      },
+      "id": "517aa3da-e223-432a-88e0-34f2e4769f6e",
+      "name": "Structured Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        944,
+        512
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1OE-OUXsbz2ZURVzamnlIlJ-Ri5FOP2du3FzW54iVu5E",
+          "mode": "list",
+          "cachedResultName": "Lista PQRSF",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1OE-OUXsbz2ZURVzamnlIlJ-Ri5FOP2du3FzW54iVu5E/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Hoja 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1OE-OUXsbz2ZURVzamnlIlJ-Ri5FOP2du3FzW54iVu5E/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "fecha": "={{ $('Generar Radicado').item.json.fecha }}",
+            "radicado": "={{ $('Generar Radicado').item.json.radicado }}",
+            "nombre": "={{ $('Generar Radicado').item.json.body.nombre }}",
+            "correo": "={{ $('Generar Radicado').item.json.body.correo }}",
+            "asunto": "={{ $('Generar Radicado').item.json.body.asunto }}",
+            "descripcion": "={{ $('Generar Radicado').item.json.body.descripcion }}",
+            "prioridad": "={{ $json.output.prioridad }}",
+            "categoria": "={{ $json.output.categoria }}",
+            "area": "={{ $json.output.area }}",
+            "resumen": "={{ $json.output.resumen }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "radicado",
+              "displayName": "radicado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "nombre",
+              "displayName": "nombre",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "correo",
+              "displayName": "correo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "asunto",
+              "displayName": "asunto",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "descripcion",
+              "displayName": "descripcion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "fecha",
+              "displayName": "fecha",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "categoria",
+              "displayName": "categoria",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "prioridad",
+              "displayName": "prioridad",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "area",
+              "displayName": "area",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "resumen",
+              "displayName": "resumen",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "203571ad-161b-4a8c-a1ba-f546e3187ece",
+      "name": "Registrar en Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1152,
+        288
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "5Byy3591c8PUgeWm",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "53096220-b5a1-416e-8960-7a6aac63e4fc",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        256,
+        288
+      ],
+      "id": "7734062c-5a3a-4198-9e62-a4c411500a38",
+      "name": "Webhook",
+      "webhookId": "53096220-b5a1-416e-8960-7a6aac63e4fc"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"radicado\": \"{{ $json.radicado }}\",\n  \"categoria\": \"{{ $json.categoria }}\",\n  \"prioridad\": \"{{ $json.prioridad }}\",\n  \"area\": \"{{ $json.area }}\",\n  \"fecha\": \"{{ $json.fecha }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        2032,
+        288
+      ],
+      "id": "c9dd200a-f038-4cda-9f03-b17cda1a3822",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Generar Radicado": {
+      "main": [
+        [
+          {
+            "node": "Clasificador PQRS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clasificador PQRS": {
+      "main": [
+        [
+          {
+            "node": "Registrar en Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verificar Prioridad Alta": {
+      "main": [
+        [
+          {
+            "node": "Notificar Área Jurídica",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Preparar Resultado Final",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notificar Área Jurídica": {
+      "main": [
+        [
+          {
+            "node": "Preparar Resultado Final",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Clasificador PQRS",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "Clasificador PQRS",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Clasificador PQRS",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Registrar en Sheets": {
+      "main": [
+        [
+          {
+            "node": "Verificar Prioridad Alta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Generar Radicado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Resultado Final": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "2f81c42c-a130-4424-bd48-0f2d24395c29",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "38b15e01014472e6fbfbaed328d96ad21f98224fcfd29336dce477782769a452"
+  },
+  "id": "8Q3Y8dbGBX2UG7lo",
+  "tags": []
+}
