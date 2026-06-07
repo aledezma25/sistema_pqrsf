@@ -866,12 +866,14 @@
             submitBtn.disabled = true;
             submitBtn.classList.add('loading');
 
-            // Gather form data
+            // Gather form data — wrapped in 'body' to match n8n structure
             const formData = {
-                nombre: document.getElementById('nombre').value.trim(),
-                correo: document.getElementById('correo').value.trim(),
-                asunto: document.getElementById('asunto').value.trim(),
-                descripcion: document.getElementById('descripcion').value.trim()
+                body: {
+                    nombre: document.getElementById('nombre').value.trim(),
+                    correo: document.getElementById('correo').value.trim(),
+                    asunto: document.getElementById('asunto').value.trim(),
+                    descripcion: document.getElementById('descripcion').value.trim()
+                }
             };
 
             try {
