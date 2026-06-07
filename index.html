@@ -565,25 +565,24 @@
                     </svg>
                     Configuración del Webhook
                 </h3>
-                <p>Configure el modo según el estado del flujo en N8n.</p>
+                <p>Seleccione el modo según el estado del flujo en N8n.</p>
 
-                <!-- Mode Toggle -->
-                <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
-                    <button type="button" id="mode-prod" onclick="setMode('production')"
-                        style="flex:1; padding: 0.5rem; border-radius: 8px; border: 1px solid var(--primary); background: var(--primary); color: white; font-size: 0.8rem; font-weight: 600; cursor: pointer;">
-                        🟢 Producción
-                    </button>
-                    <button type="button" id="mode-test" onclick="setMode('test')"
-                        style="flex:1; padding: 0.5rem; border-radius: 8px; border: 1px solid var(--input-border); background: transparent; color: var(--text-muted); font-size: 0.8rem; font-weight: 600; cursor: pointer;">
+                <div style="display:flex; gap:0.5rem; margin-bottom:0.75rem;">
+                    <button type="button" id="mode-test-btn"
+                        style="flex:1;padding:0.4rem;border-radius:8px;border:1px solid var(--primary);background:var(--primary);color:white;font-size:0.8rem;font-weight:600;cursor:pointer;">
                         🧪 Prueba
                     </button>
+                    <button type="button" id="mode-prod-btn"
+                        style="flex:1;padding:0.4rem;border-radius:8px;border:1px solid var(--input-border);background:transparent;color:var(--text-muted);font-size:0.8rem;font-weight:600;cursor:pointer;">
+                        🟢 Producción
+                    </button>
                 </div>
-                <p id="mode-hint" style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.75rem;">
-                    Flujo activo con toggle en N8n. URL: <code style="font-size:0.75rem;">/webhook/</code>
+                <p id="mode-hint" style="font-size:0.78rem;color:var(--text-muted);margin-bottom:0.75rem;">
+                    Modo prueba: activa "Test workflow" en N8n primero.
                 </p>
 
                 <div class="form-group" style="margin-bottom: 0;">
-                    <label class="form-label" for="webhook-url">Webhook URL (editable)</label>
+                    <label class="form-label" for="webhook-url">Webhook URL</label>
                     <div class="input-wrapper">
                         <span class="input-icon">
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
@@ -717,10 +716,6 @@
                         <span class="receipt-label">Área Asignada:</span>
                         <span class="receipt-value" id="receipt-area">-</span>
                     </div>
-                    <div class="receipt-row" id="receipt-resumen-row" style="display:none;">
-                        <span class="receipt-label">Resumen IA:</span>
-                        <span class="receipt-value" id="receipt-resumen" style="font-style: italic; color: var(--text-muted); font-size: 0.875rem;">-</span>
-                    </div>
                 </div>
 
                 <button type="button" class="btn btn-primary" id="new-btn">Registrar Otra Solicitud</button>
@@ -747,43 +742,9 @@
     <script>
         // Webhook configuration
         const DEFAULT_WEBHOOK_ID = "53096220-b5a1-416e-8960-7a6aac63e4fc";
-        const WEBHOOK_PROD = `https://acchami25.app.n8n.cloud/webhook/${DEFAULT_WEBHOOK_ID}`;
         const WEBHOOK_TEST = `https://acchami25.app.n8n.cloud/webhook-test/${DEFAULT_WEBHOOK_ID}`;
-        const DEFAULT_WEBHOOK_URL = WEBHOOK_PROD;
-
-        // Mode management
-        let currentMode = localStorage.getItem('pqrsf_mode') || 'production';
-
-        function setMode(mode) {
-            currentMode = mode;
-            localStorage.setItem('pqrsf_mode', mode);
-            const url = mode === 'production' ? WEBHOOK_PROD : WEBHOOK_TEST;
-            webhookUrl = url;
-            webhookUrlInput.value = url;
-            localStorage.setItem('pqrsf_webhook_url', url);
-
-            const prodBtn = document.getElementById('mode-prod');
-            const testBtn = document.getElementById('mode-test');
-            const hint = document.getElementById('mode-hint');
-
-            if (mode === 'production') {
-                prodBtn.style.background = 'var(--primary)';
-                prodBtn.style.color = 'white';
-                prodBtn.style.borderColor = 'var(--primary)';
-                testBtn.style.background = 'transparent';
-                testBtn.style.color = 'var(--text-muted)';
-                testBtn.style.borderColor = 'var(--input-border)';
-                hint.innerHTML = 'Flujo activo con toggle en N8n. URL: <code style="font-size:0.75rem;">/webhook/</code>';
-            } else {
-                testBtn.style.background = 'var(--primary)';
-                testBtn.style.color = 'white';
-                testBtn.style.borderColor = 'var(--primary)';
-                prodBtn.style.background = 'transparent';
-                prodBtn.style.color = 'var(--text-muted)';
-                prodBtn.style.borderColor = 'var(--input-border)';
-                hint.innerHTML = 'Flujo en modo prueba (botón "Test workflow" activo en N8n). URL: <code style="font-size:0.75rem;">/webhook-test/</code>';
-            }
-        }
+        const WEBHOOK_PROD = `https://acchami25.app.n8n.cloud/webhook/${DEFAULT_WEBHOOK_ID}`;
+        const DEFAULT_WEBHOOK_URL = WEBHOOK_TEST;
 
         // DOM elements
         const formCard = document.getElementById('form-card');
@@ -811,15 +772,10 @@
         const receiptDate = document.getElementById('receipt-date');
         const receiptCategory = document.getElementById('receipt-category');
         const receiptArea = document.getElementById('receipt-area');
-        const receiptResumen = document.getElementById('receipt-resumen');
-        const receiptResumenRow = document.getElementById('receipt-resumen-row');
 
         // Initialize Settings from LocalStorage
         let webhookUrl = localStorage.getItem('pqrsf_webhook_url') || DEFAULT_WEBHOOK_URL;
         webhookUrlInput.value = webhookUrl;
-
-        // Initialize mode buttons on load
-        window.addEventListener('DOMContentLoaded', () => setMode(currentMode));
 
         // Initialize Theme from LocalStorage or System Preferences
         const savedTheme = localStorage.getItem('pqrsf_theme');
@@ -847,6 +803,35 @@
             webhookUrl = val;
             localStorage.setItem('pqrsf_webhook_url', val);
         });
+
+        // Mode toggle logic
+        const modeTestBtn = document.getElementById('mode-test-btn');
+        const modeProdBtn = document.getElementById('mode-prod-btn');
+        const modeHint = document.getElementById('mode-hint');
+
+        function setMode(mode) {
+            if (mode === 'test') {
+                webhookUrl = WEBHOOK_TEST;
+                modeTestBtn.style.cssText += ';background:var(--primary);color:white;border-color:var(--primary);';
+                modeProdBtn.style.cssText += ';background:transparent;color:var(--text-muted);border-color:var(--input-border);';
+                modeHint.textContent = 'Modo prueba: activa "Test workflow" en N8n primero.';
+            } else {
+                webhookUrl = WEBHOOK_PROD;
+                modeProdBtn.style.cssText += ';background:var(--primary);color:white;border-color:var(--primary);';
+                modeTestBtn.style.cssText += ';background:transparent;color:var(--text-muted);border-color:var(--input-border);';
+                modeHint.textContent = 'Modo producción: flujo debe estar activado con el toggle en N8n.';
+            }
+            webhookUrlInput.value = webhookUrl;
+            localStorage.setItem('pqrsf_webhook_url', webhookUrl);
+            localStorage.setItem('pqrsf_mode', mode);
+        }
+
+        modeTestBtn.addEventListener('click', () => setMode('test'));
+        modeProdBtn.addEventListener('click', () => setMode('production'));
+
+        // Restore saved mode
+        const savedMode = localStorage.getItem('pqrsf_mode') || 'test';
+        setMode(savedMode);
 
         themeToggle.addEventListener('click', () => {
             const currentTheme = document.body.getAttribute('data-theme');
@@ -894,7 +879,7 @@
                 const response = await fetch(webhookUrl, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'text/plain'
+                        'Content-Type': 'application/json'
                     },
                     body: JSON.stringify(formData)
                 });
@@ -921,35 +906,26 @@
                 if (result && (result.radicado || (Array.isArray(result) && result[0] && result[0].radicado))) {
                     const data = Array.isArray(result) ? result[0] : result;
 
-                    // Fill receipt fields
                     receiptRadicado.textContent = data.radicado || '-';
                     receiptDate.textContent = data.fecha || new Date().toISOString().split('T')[0];
                     receiptCategory.textContent = data.categoria || 'No clasificada';
                     receiptArea.textContent = data.area || 'General';
 
-                    // Priority badge with color
                     const priority = (data.prioridad || 'Media').toLowerCase();
                     receiptPriority.textContent = data.prioridad || 'Media';
                     receiptPriority.className = `receipt-badge badge-${priority}`;
 
-                    // Show resumen if available
-                    if (data.resumen) {
-                        receiptResumen.textContent = data.resumen;
-                        receiptResumenRow.style.display = 'flex';
-                    }
-
-                    // Dynamic success message based on priority
+                    // Mensaje dinámico según prioridad
                     if (priority === 'alta') {
-                        successMsg.innerHTML = `Su solicitud ha sido clasificada como <strong>prioridad alta</strong> y fue escalada al área <strong>${data.area}</strong>. Recibirá respuesta en menos de 24 horas.`;
+                        successMsg.innerHTML = `Su solicitud fue clasificada como <strong>prioridad alta</strong> y escalada al área <strong>${data.area}</strong>. Recibirá respuesta en menos de 24 horas.`;
                     } else if (priority === 'media') {
-                        successMsg.textContent = `Su solicitud fue recibida y asignada al área ${data.area}. Recibirá respuesta en 3-5 días hábiles.`;
+                        successMsg.textContent = `Su solicitud fue asignada al área ${data.area}. Recibirá respuesta en 3-5 días hábiles.`;
                     } else {
-                        successMsg.textContent = `Su solicitud fue recibida correctamente. Recibirá un correo de confirmación con su número de radicado.`;
+                        successMsg.textContent = `Su solicitud fue recibida. Recibirá un correo de confirmación con su número de radicado.`;
                     }
 
                     receiptDetails.style.display = 'block';
                 } else {
-                    // Hide receipt if response wasn't full JSON
                     receiptDetails.style.display = 'none';
                 }
 
