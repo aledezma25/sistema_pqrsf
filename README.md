@@ -99,3 +99,16 @@ Definición de flujo importable para n8n que automatiza el procesamiento lógico
 - [index.html](file:///c:/Users/chami/Desktop/ProyectoSistemasInteligentes/index.html): Código principal del front-end con el formulario, lógica de envío e interfaz responsive.
 - [PQRSF.json](file:///c:/Users/chami/Desktop/ProyectoSistemasInteligentes/PQRSF.json): Archivo exportado del flujo de n8n para importar.
 - [README.md](file:///c:/Users/chami/Desktop/ProyectoSistemasInteligentes/README.md): Documento de presentación y guía del sistema.
+
+
+## Uso de IA Generativa
+
+El desarrollo fue asistido mediante herramientas de IA generativa
+(ChatGPT y Claude) para:
+
+- Diseño de prompts.
+- Documentación técnica.
+- Estructuración de la arquitectura.
+- Apoyo en generación de código.
+
+Todo el código fue revisado, adaptado y comprendido por los integrantes.
